@@ -21,16 +21,28 @@ h1{margin:0;font:400 1.4rem/1 var(--display);color:var(--coral)}
 main{display:grid;place-items:center;align-content:center;gap:18px;text-align:center;min-height:0}
 .teams{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(100%,420px)}
 .teams button{font:700 1.05rem/1.2 var(--body);padding:1.1em .6em;border-radius:14px;border:2px solid var(--line);background:var(--felt-2);color:var(--chalk)}
-#big{width:min(78vw,62vh);aspect-ratio:1;border-radius:50%;border:0;font:400 clamp(2rem,11vw,4rem)/1 var(--display);color:var(--ink);
-  background:#5d6f66;box-shadow:0 14px 0 #3c4a43;transition:transform 80ms,box-shadow 80ms,background 200ms}
-#big.live{background:var(--coral);box-shadow:0 14px 0 var(--coral-deep);animation:pulse 1s ease-in-out infinite}
-#big.live:active{transform:translateY(12px);box-shadow:0 2px 0 var(--coral-deep)}
-#big.won{background:var(--mint);box-shadow:0 14px 0 #5aa682}
-@keyframes pulse{50%{filter:brightness(1.15)}}
+body{background:radial-gradient(120% 70% at 50% 45%,color-mix(in srgb,var(--tc,#3c4a43) 22%,var(--felt)) 0%,var(--felt) 70%);transition:background .3s}
+.team-name{margin:0;font:400 clamp(1.6rem,9vw,2.8rem)/1 var(--display);color:var(--tc,var(--chalk));text-shadow:0 0 24px color-mix(in srgb,var(--tc,#fff) 50%,transparent)}
+.ring{position:relative;width:min(80vw,58vh);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;
+  background:conic-gradient(from 0deg,#2a3530,#1a221e,#2a3530,#1a221e,#2a3530);box-shadow:inset 0 0 0 8px #0b120e,0 18px 40px rgba(0,0,0,.5)}
+#big{width:82%;aspect-ratio:1;border-radius:50%;border:0;font:400 clamp(2rem,11vw,4.2rem)/1 var(--display);color:rgba(255,255,255,.55);letter-spacing:.04em;
+  background:radial-gradient(circle at 35% 30%,#7d8b84,#4a5751 60%,#36413c);box-shadow:0 12px 0 #232c28,inset 0 -10px 20px rgba(0,0,0,.35);transition:transform 70ms,box-shadow 70ms,filter .2s}
+#big.live{color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.35);background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--tc) 55%,#fff),var(--tc) 55%,color-mix(in srgb,var(--tc) 70%,#000));
+  box-shadow:0 12px 0 color-mix(in srgb,var(--tc) 55%,#000),inset 0 -10px 20px rgba(0,0,0,.25),0 0 50px var(--tc);animation:pulse 900ms ease-in-out infinite}
+#big.live:active{transform:translateY(10px);box-shadow:0 2px 0 color-mix(in srgb,var(--tc) 55%,#000),0 0 70px var(--tc)}
+.ring.live{animation:spin 3s linear infinite;background:conic-gradient(from 0deg,var(--tc),transparent 25%,var(--tc) 50%,transparent 75%,var(--tc))}
+.ring.live #big{animation:pulse 900ms ease-in-out infinite,unspin 3s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes unspin{to{transform:rotate(-360deg)}}
+#big.won{color:#10151A;background:radial-gradient(circle at 35% 30%,#fff,var(--tc) 60%);box-shadow:0 12px 0 color-mix(in srgb,var(--tc) 55%,#000),0 0 80px var(--tc)}
+body.flash{animation:flash .6s ease-out 2}
+@keyframes flash{30%{background:var(--tc)}}
+.other{display:inline-block;padding:.15em .5em;border-radius:8px;background:var(--oc);color:#10151A}
+.teams button{border-left:8px solid var(--tc)!important}
+@keyframes pulse{50%{filter:brightness(1.18) saturate(1.1)}}
 #msg{margin:0;font:700 clamp(1.1rem,5vw,1.6rem)/1.3 var(--body);min-height:2.6em;max-width:22ch}
 footer{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:.85rem}
 footer button{background:none;border:1.5px solid var(--line);color:var(--muted);border-radius:8px;padding:.4em .7em;font:inherit}
-@media (prefers-reduced-motion:reduce){#big.live{animation:none}}
+@media (prefers-reduced-motion:reduce){#big.live,.ring.live,.ring.live #big,body.flash{animation:none}}
 </style>
 </head>
 <body>
@@ -55,6 +67,9 @@ footer button{background:none;border:1.5px solid var(--line);color:var(--muted);
 const FB = {"apiKey":"AIzaSyBVRPp4DW4jqhOjlePmJcoqoO8cJmgA6Vk","authDomain":"jeoparty-96116.firebaseapp.com","databaseURL":"https://jeoparty-96116-default-rtdb.europe-west1.firebasedatabase.app","projectId":"jeoparty-96116","appId":"1:276348909154:web:132fea9c13989291a7833b"};
 const $ = s => document.querySelector(s);
 const el = (t, p, ...k) => { const n = document.createElement(t); if (p) for (const [a, v] of Object.entries(p)) { if (a === 'text') n.textContent = v; else if (a.startsWith('on')) n.addEventListener(a.slice(2), v); else n.setAttribute(a, v); } n.append(...k); return n; };
+const COLORS = ['#FF5D5D', '#3FA9F5', '#FFC23C', '#41D18B', '#B07CFF', '#FF8A3D', '#FF6FCF', '#2ED3C6'];
+let ac = null, lastFloor = -2;
+function beep(seq) { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); seq.forEach(([f, at, d, type, v]) => { const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + at; o.type = type || 'square'; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v || .25, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d + .02); }); } catch (e) {} }
 const room = (new URLSearchParams(location.search).get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
 const KEY = 'jeoparty-team-' + room;
 let team = null, state = null, pressed = '', db = null, presence = null;
@@ -74,13 +89,14 @@ function join() {
   presence.onDisconnect().remove();
   presence.set({ at: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
 }
-function pick(i) { team = i; try { localStorage.setItem(KEY, String(i)); } catch (e) {} join(); render(); }
+function pick(i) { beep([[660, 0, .08], [990, .08, .12]]); team = i; try { localStorage.setItem(KEY, String(i)); } catch (e) {} join(); render(); }
 $('#change').addEventListener('click', () => { if (presence) { presence.onDisconnect().cancel(); presence.remove().catch(() => {}); presence = null; } team = null; try { localStorage.removeItem(KEY); } catch (e) {} render(); });
 
 function press() {
   if (!state || !state.open || team === null || (state.locked || []).includes(team) || pressed === state.round) return;
   pressed = state.round;
-  try { navigator.vibrate && navigator.vibrate(60); } catch (e) {}
+  try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
+  beep([[147, 0, .3, 'square', .35], [110, 0, .3, 'sawtooth', .2]]);
   db.ref(`rooms/${room}/buzz/${state.round}/${team}`).set(firebase.database.ServerValue.TIMESTAMP).catch(() => {});
   render();
 }
@@ -90,19 +106,26 @@ function render() {
   $('#who').textContent = team === null ? `Game ${room}` : `${names[team] || 'Team ' + (team + 1)} · game ${room}`;
   if (team === null) {
     const n = names.length || 8;
-    show([el('p', { id: 'msg', text: 'Which team is this phone for?' }), el('div', { class: 'teams' }, ...Array.from({ length: n }, (_, i) => el('button', { type: 'button', text: names[i] || 'Team ' + (i + 1), onclick: () => pick(i) })))]);
+    show([el('p', { id: 'msg', text: 'Which team is this phone for?' }), el('div', { class: 'teams' }, ...Array.from({ length: n }, (_, i) => { const b = el('button', { type: 'button', text: names[i] || 'Team ' + (i + 1), onclick: () => pick(i) }); b.style.setProperty('--tc', COLORS[i % 8]); return b; }))]);
     return;
   }
   const s = state || {}, locked = (s.locked || []).includes(team), floor = typeof s.floor === 'number' ? s.floor : -1;
-  let cls = '', label = 'WAIT', msg = 'Wait for the host to read the clue.';
-  if (floor === team) { cls = 'won'; label = 'YOU!'; msg = 'You were first. Answer now!'; }
-  else if (floor >= 0) { msg = `${names[floor] || 'Team ' + (floor + 1)} buzzed first.`; }
-  else if (s.open && locked) { msg = 'Your team already had a go at this one.'; }
-  else if (s.open && pressed === s.round) { label = '…'; msg = 'Buzzed! Checking who was first…'; }
-  else if (s.open) { cls = 'live'; label = 'BUZZ'; msg = 'Buzzers are open!'; }
+  document.body.style.setProperty('--tc', COLORS[team % 8]);
+  if (floor !== lastFloor) {
+    if (floor === team) { beep([[523, 0, .12], [659, .1, .12], [784, .2, .12], [1047, .3, .3]]); try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (e) {} document.body.classList.remove('flash'); void document.body.offsetWidth; document.body.classList.add('flash'); }
+    else if (floor >= 0 && lastFloor !== -2) beep([[330, 0, .12, 'square', .15], [262, .12, .2, 'square', .15]]);
+    lastFloor = floor;
+  }
+  let cls = '', label = 'WAIT', msg = [document.createTextNode('Wait for the host to read the clue.')];
+  if (floor === team) { cls = 'won'; label = 'YOU!'; msg = [document.createTextNode('You were first. Answer now!')]; }
+  else if (floor >= 0) { const tag = el('span', { class: 'other', text: names[floor] || 'Team ' + (floor + 1) }); tag.style.setProperty('--oc', COLORS[floor % 8]); msg = [tag, document.createTextNode(' buzzed first.')]; }
+  else if (s.open && locked) { msg = [document.createTextNode('Your team already had a go at this one.')]; }
+  else if (s.open && pressed === s.round) { label = '…'; msg = [document.createTextNode('Buzzed! Checking who was first…')]; }
+  else if (s.open) { cls = 'live'; label = 'BUZZ!'; msg = [document.createTextNode('Buzzers are open!')]; }
   const big = el('button', { id: 'big', type: 'button', class: cls, 'aria-label': 'Buzz', text: label });
   big.addEventListener('pointerdown', e => { e.preventDefault(); press(); });
-  show([big, el('p', { id: 'msg', role: 'status', text: msg })]);
+  const p = el('p', { id: 'msg', role: 'status' }); p.append(...msg);
+  show([el('p', { class: 'team-name', text: names[team] || 'Team ' + (team + 1) }), el('div', { class: 'ring' + (cls === 'live' ? ' live' : '') }, big), p]);
 }
 try { if (navigator.wakeLock) { const w = () => navigator.wakeLock.request('screen').catch(() => {}); w(); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') w(); }); } } catch (e) {}
 render();
