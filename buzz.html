@@ -49,6 +49,7 @@ footer{display:flex;justify-content:space-between;align-items:center;gap:8px;col
 .lifebtn{display:flex;align-items:center;gap:12px;background:var(--felt-2);border:2px solid var(--amber);border-radius:16px;padding:8px 16px 8px 8px;color:var(--chalk);font:inherit;text-align:left}
 .lifebtn img{width:64px;height:64px;border-radius:12px;object-fit:cover}
 .lifebtn b{display:block;font:400 1.15rem/1.1 var(--display);color:var(--amber)}.lifebtn small{font-size:.85rem;color:var(--muted)}
+.lifebtn.used{border-color:var(--line);opacity:.6;cursor:default}.lifebtn.used b{color:var(--muted)}
 .lifeask{display:grid;gap:10px;justify-items:center;font-weight:700}.lifeask p{margin:0}
 footer button{background:none;border:1.5px solid var(--line);color:var(--muted);border-radius:8px;padding:.4em .7em;font:inherit}
 @media (prefers-reduced-motion:reduce){#big.live,.ring.live,.ring.live #big,body.flash{animation:none}}
@@ -170,6 +171,7 @@ function render() {
           el('button', { type: 'button', text: 'No', onclick: () => { lifeAsk = false; render(); } })))
       : el('button', { type: 'button', class: 'lifebtn', onclick: () => { lifeAsk = true; render(); } }, el('img', { src: CAT, alt: '' }), el('span', {}, el('b', { text: 'Lifeline' }), el('small', { text: `Get a hint for −${cost} points` })));
   }
+  if (!life && floor === team && (s.lifeUsed || []).includes(team)) life = el('div', { class: 'lifebtn used', role: 'status' }, el('img', { src: CAT, alt: '' }), el('span', {}, el('b', { text: 'Lifeline used' }), el('small', { text: 'You have used your lifeline for this question.' })));
   show([el('p', { class: 'team-name', text: names[team] || 'Team ' + (team + 1) }), el('div', { class: 'ring' + (cls === 'live' ? ' live' : '') }, big), p, life, tipLine].filter(Boolean));
 }
 try { if (navigator.wakeLock) { const w = () => navigator.wakeLock.request('screen').catch(() => {}); w(); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') w(); }); } } catch (e) {}

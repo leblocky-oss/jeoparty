@@ -3008,7 +3008,7 @@ const Buzz = (() => {
     if (open && c.locked.length !== lastLocked) nonce = Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
     wasOpen = open; lastLocked = c ? c.locked.length : -1;
     const round = open ? `${c.id}_${c.locked.length}_${nonce}` : '';
-    const st = { open, round, locked: c ? c.locked : [], floor: c && c.floor != null ? c.floor : -1, teams: S.teams.map(t => t.name), life: lifeOK(c), lifeCost: S.rules.lifeCost };
+    const st = { open, round, locked: c ? c.locked : [], floor: c && c.floor != null ? c.floor : -1, teams: S.teams.map(t => t.name), life: lifeOK(c), lifeUsed: c && c.lifeUsed ? c.lifeUsed : [], lifeCost: S.rules.lifeCost };
     const sig = JSON.stringify(st); if (sig === sent) return; sent = sig;
     db.ref(`rooms/${room()}/state`).set(st).catch(() => {});
     if (open && round !== roundKey) {
@@ -3656,7 +3656,7 @@ function renderHost() {
     if (live) add(now, el('p', { class: 'hlabel', text: c.dd ? 'Answering' : c.locked.length ? 'Steal: who buzzed?' : 'Who buzzed first?' }), teamBtns(i => c.floor === i, i => c.locked.includes(i) || (c.dd && c.floor !== i)),
       el('div', { class: 'hrow' }, hb(`Correct ${signed(win)}`, () => judge(true), 'ok', null, c.floor == null), hb(pen ? `Wrong ${signed(-pen)}` : 'Wrong, no penalty', () => judge(false), 'no', null, c.floor == null),
         c.dd ? null : hb('Correct, keep open', () => judge(true, true), '', null, c.floor == null)),
-      el('div', { class: 'hrow' }, el('span', { id: 'htnum' }), R.timer ? hb('Start or restart clock (Space)', spaceKey) : null, T ? hb(T.paused != null ? 'Resume clock' : 'Pause clock', pauseTimer) : null, hb('Nobody got it: show answer', reveal), lifeOK(c) ? hb(`Lifeline \u2212${fmt(R.lifeCost)}`, () => useLifeline(c.floor, 'host')) : null),
+      el('div', { class: 'hrow' }, el('span', { id: 'htnum' }), R.timer ? hb('Start or restart clock (Space)', spaceKey) : null, T ? hb(T.paused != null ? 'Resume clock' : 'Pause clock', pauseTimer) : null, hb('Nobody got it: show answer', reveal), lifeOK(c) ? hb(`Lifeline \u2212${fmt(R.lifeCost)}`, () => useLifeline(c.floor, 'host')) : c.floor != null && (c.lifeUsed || []).includes(c.floor) ? el('span', { class: 'hmsg', text: `${S.teams[c.floor].name} has used its lifeline for this question.` }) : null),
       el('p', { class: 'hhint', text: `Rule now: wrong answer ${R.penalty === 'full' ? 'loses the points' : R.penalty === 'half' ? 'loses half' : 'costs nothing'}${R.steal ? ', then others can steal' : ''}. Change it in Setup, Rules.` }));
     add(now, el('div', { class: 'hrow' }, src(q.audio) ? hb('Play the clip (P)', playClip) : null, hb(c.phase === 'done' ? 'Back to board (Enter)' : 'Close without scoring', closeClue, c.phase === 'done' ? 'ok' : ''), hb('Undo', undo)));
   } else add(now, el('p', { class: 'hk', text: 'Board' }), el('p', { class: 'hmsg', text: statusLine() + ' Tap a tile in the live view to open it.' }),
