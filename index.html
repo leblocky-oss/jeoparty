@@ -2858,7 +2858,7 @@ function sanitise(raw) {
     cur: null, fin: null, log: Array.isArray(s.log) ? s.log.slice(-300) : [] };
   const c = s.cur;
   if (c && typeof c === 'object' && typeof c.id === 'string') out.cur = { id: c.id, phase: String(c.phase), floor: Number.isInteger(c.floor) ? c.floor : null,
-    locked: Array.isArray(c.locked) ? c.locked.filter(Number.isInteger) : [], dd: !!c.dd, wager: Number.isFinite(c.wager) ? c.wager : null, msg: String(c.msg || ''), won: Array.isArray(c.won) ? c.won.filter(Number.isInteger) : [] };
+    locked: Array.isArray(c.locked) ? c.locked.filter(Number.isInteger) : [], dd: !!c.dd, wager: Number.isFinite(c.wager) ? c.wager : null, msg: String(c.msg || ''), won: Array.isArray(c.won) ? c.won.filter(Number.isInteger) : [], lifeUsed: Array.isArray(c.lifeUsed) ? c.lifeUsed.filter(Number.isInteger) : [] };
   const fi = s.fin;
   if (fi && typeof fi === 'object') out.fin = { q: Number.isInteger(fi.q) ? fi.q : 0, phase: String(fi.phase), res: fi.res && typeof fi.res === 'object' ? fi.res : {}, order: Array.isArray(fi.order) ? fi.order : null };
   return out;
@@ -2886,7 +2886,7 @@ function content() {
 }
 function findClue(id) { for (const c of content()) for (const q of c.clues) if (q.id === id) return { q, cat: c }; return null; }
 const FIN_WIN = 3;
-const lifeOK = c => { if (!c || c.dd || c.floor == null || c.phase !== 'answer') return false; const f = findClue(c.id); return !!f && !f.cat.special && f.q.value === 500; };
+const lifeOK = c => { if (!c || c.dd || c.floor == null || c.phase !== 'answer' || (c.lifeUsed || []).includes(c.floor)) return false; const f = findClue(c.id); return !!f && !f.cat.special && f.q.value === 500; };
 const TEAM_COLORS = ['#FF5D5D', '#3FA9F5', '#FFC23C', '#41D18B', '#B07CFF', '#FF8A3D', '#FF6FCF', '#2ED3C6'];
 const teamColor = i => TEAM_COLORS[i % TEAM_COLORS.length];
 const finalList = () => (DATA.final.clues || [{ clue: DATA.final.clue, answer: DATA.final.answer, placeholder: DATA.final.placeholder }]).map((q, k) => ({ ...q, ...(S.edits.fq[k] || {}) }));
@@ -3031,8 +3031,8 @@ const Buzz = (() => {
 let lifeShow = null, lifeTimer = null, lifeLeft = 0;
 function useLifeline(i, how) {
   const c = S.cur;
-  if (!lifeOK(c) || c.floor !== i) { if (how === 'host') toast('The lifeline is only for the team answering a 500 question.'); return; }
-  act(() => award(i, -S.rules.lifeCost, `Lifeline · ${findClue(c.id).cat.name} ${findClue(c.id).q.value}`, true));
+  if (!lifeOK(c) || c.floor !== i) { if (how === 'host') toast(c && (c.lifeUsed || []).includes(i) ? 'This team already used its lifeline on this question.' : 'The lifeline is only for the team answering a 500 question.'); return; }
+  act(() => { c.lifeUsed = [...(c.lifeUsed || []), i]; award(i, -S.rules.lifeCost, `Lifeline · ${findClue(c.id).cat.name} ${findClue(c.id).q.value}`, true); });
   Snd.dd(); if (T && T.paused == null) pauseTimer();
   lifeShow = i; lifeLeft = S.rules.lifeSecs; clearInterval(lifeTimer); renderLife();
   lifeTimer = setInterval(() => {
@@ -3051,7 +3051,7 @@ function renderLife() {
   if (!o) { o = el('div', { id: 'lifeO', role: 'status' }); PROJ.append(o); }
   o.style.setProperty('--tc', teamColor(lifeShow));
   o.replaceChildren(el('div', { class: 'lifecard' }, el('img', { src: DATA.media.layan, alt: 'Your lifeline' }),
-    el('div', {}, el('p', { class: 'sub', text: 'Lifeline!' }), el('h2', { text: S.teams[lifeShow].name }), el('p', { class: 'facts', text: `Ask for your hint now. −${fmt(S.rules.lifeCost)} points.` }), el('div', { class: 'lifebar' }, el('i', { style: `animation-duration:${S.rules.lifeSecs}s` }))), el('div', { class: 'lifenum', text: String(lifeLeft) })));
+    el('div', {}, el('p', { class: 'sub', text: 'Ask Lilo!' }), el('h2', { text: S.teams[lifeShow].name }), el('p', { class: 'facts', text: `Ask for your hint now. −${fmt(S.rules.lifeCost)} points.` }), el('div', { class: 'lifebar' }, el('i', { style: `animation-duration:${S.rules.lifeSecs}s` }))), el('div', { class: 'lifenum', text: String(lifeLeft) })));
   mirror(true); renderHost();
 }
 function qrImg(text, cell) {
